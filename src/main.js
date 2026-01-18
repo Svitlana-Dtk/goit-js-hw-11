@@ -11,44 +11,37 @@ import {
 
 const form = document.querySelector('.form');
 
-form.addEventListener('submit', onSearch);
-
-async function onSearch(event) {
+form.addEventListener('submit', event => {
   event.preventDefault();
 
   const query = event.target.elements['search-text'].value.trim();
 
-  if (!query) {
-    iziToast.warning({
-      message: 'Please enter a search query',
-    });
+   if (!query) {
     return;
   }
 
   clearGallery();
   showLoader();
 
-  try {
-    const data = await getImagesByQuery(query);
+  getImagesByQuery(query)
+    .then(response => {
+      const images = response.data.hits;
 
-    if (data.hits.length === 0) {
-      iziToast.error({
-        message:
-          'Sorry, there are no images matching your search query. Please try again!',
-      });
-      return;
-    }
+      if (images.length === 0) {
+        iziToast.error({
+          message:
+            'Sorry, there are no images matching your search query. Please try again!',
+        });
+        return;
+      }
 
-    createGallery(data.hits);
-  } catch (error) {
-    iziToast.error({
-      message: 'Something went wrong. Try again later.',
+      createGallery(images);
+    })
+    .catch(error => {
+      console.error(error);
+    })
+    .finally(() => {
+      hideLoader();
+      form.reset(); 
     });
-  } finally {
-    hideLoader();
-    event.target.reset();
-  }
-}
-
-
-
+});
